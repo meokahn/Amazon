@@ -1,27 +1,32 @@
+import telebot
 import os
-import requests
-from flask import Flask
+import time
+import threading
 
-app = Flask(__name__)
-
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+# Variabili d'ambiente da Railway
+TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 
-@app.route("/")
-def home():
-    return "Bot Amazon Hunter è attivo!"
+bot = telebot.TeleBot(TOKEN)
 
-@app.route("/send")
-def send():
-    message = "🔥 Offerta di test da Amazon Hunter!"
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    data = {
-        "chat_id": CHANNEL_ID,
-        "text": message,
-        "parse_mode": "HTML"
-    }
-    requests.post(url, data=data)
-    return "Messaggio inviato!"
+# Comando di test per confermare che il bot funziona
+@bot.message_handler(commands=['start'])
+def start(message):
+    bot.reply_to(message, "✅ Amazon Hunter attivo e funzionante!")
 
+# Funzione per inviare un messaggio ogni X tempo (test ogni ora)
+def loop_annuncio():
+    while True:
+        try:
+            messaggio = "🔥 Offerta di prova da Amazon Hunter"
+            bot.send_message(CHANNEL_ID, messaggio)
+            print("Messaggio inviato correttamente.")
+        except Exception as e:
+            print("Errore nell'invio del messaggio:", e)
+        time.sleep(3600)  # ogni ora (3600 secondi)
+
+# Avvio del bot e del loop messaggi
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    print("Avvio Amazon Hunter...")
+    threading.Thread(target=loop_annuncio).start()
+    bot.infinity_polling()
